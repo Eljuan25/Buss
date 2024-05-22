@@ -1,0 +1,114 @@
+// schema.prisma
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+
+
+model Type {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  units       Unit[]
+}
+
+model Stop {
+  id              Int      @id @default(autoincrement())
+  name            String
+  trajectoryGeom  String?
+  address         String
+  cities          StopsCities[]
+  trajectories    TrajectoriesStops[]
+}
+
+model City {
+  id          Int          @id @default(autoincrement())
+  cityName    String
+  stops       StopsCities[]
+  trajectories Trajectory[]
+}
+
+model Service {
+  id      Int            @id @default(autoincrement())
+  name    String
+  cost    String?
+  units   UnitsService[]
+}
+
+model Unit {
+  id            Int                @id @default(autoincrement())
+  name          String
+  capacity      Int
+  type          Type?              @relation(fields: [typeId], references: [id])
+  typeId        Int?
+  trajectories  UnitsTrajectories[]
+  services      UnitsService[]
+}
+
+model Trajectory {
+  id                Int               @id @default(autoincrement())
+  name              String
+  passingFrequency  Int
+  estimatedTime     Int
+  serviceCost       Float?
+  startTime         DateTime?
+  endTime           DateTime?
+  trajectoryGeom    String?
+  city              City?             @relation(fields: [cityId], references: [id])
+  cityId            Int?
+  stops             TrajectoriesStops[]
+  schedules         Schedule[]
+  units             UnitsTrajectories[]
+}
+
+model StopsCities {
+  id      Int   @id @default(autoincrement())
+  stop    Stop  @relation(fields: [stopId], references: [id])
+  stopId  Int
+  city    City  @relation(fields: [cityId], references: [id])
+  cityId  Int
+  @@unique([stopId, cityId])
+}
+
+model TrajectoriesStops {
+  id            Int         @id @default(autoincrement())
+  trajectory    Trajectory  @relation(fields: [trajectoryId], references: [id])
+  trajectoryId  Int
+  stop          Stop        @relation(fields: [stopId], references: [id])
+  stopId        Int
+  @@unique([trajectoryId, stopId])
+}
+
+model UnitsTrajectories {
+  id            Int         @id @default(autoincrement())
+  unit          Unit        @relation(fields: [unitId], references: [id])
+  unitId        Int
+  trajectory    Trajectory  @relation(fields: [trajectoryId], references: [id])
+  trajectoryId  Int
+  @@unique([unitId, trajectoryId])
+}
+
+model UnitsService {
+  id        Int      @id @default(autoincrement())
+  unit      Unit     @relation(fields: [unitId], references: [id])
+  unitId    Int
+  service   Service  @relation(fields: [serviceId], references: [id])
+  serviceId Int
+  @@unique([unitId, serviceId])
+}
+
+model Schedule {
+  id             Int         @id @default(autoincrement())
+  time           Int
+  trajectory     Trajectory  @relation(fields: [trajectoryId], references: [id])
+  trajectoryId   Int
+
+}
